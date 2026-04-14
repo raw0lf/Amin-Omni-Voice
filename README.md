@@ -1,4 +1,4 @@
-# 🎙️ Amin OmniVoice
+# <img src="app/AminMedia_WHT_INKBLEED.png" height="32"> Amin OmniVoice
 
 **Amin OmniVoice** is a premium, all-in-one AI Audio Studio designed for zero-shot multilingual text-to-speech, professional voice cloning, and advanced audio editing. 
 
