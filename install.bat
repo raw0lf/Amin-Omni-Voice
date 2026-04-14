@@ -44,6 +44,7 @@ call env\Scripts\activate
 
 echo [3/4] Detecting GPU and installing PyTorch...
 python -m pip install --upgrade pip wheel
+if %ERRORLEVEL% neq 0 ( echo [ERROR] Pip upgrade failed. & pause & exit /b 1 )
 
 :: Auto-detection logic
 set "CUDA_INDEX=cu124"
@@ -66,10 +67,12 @@ if %ERRORLEVEL% == 0 (
 
 echo Installing PyTorch with %CUDA_INDEX%...
 python -m pip install --force-reinstall --no-cache-dir torch torchvision torchaudio --index-url https://download.pytorch.org/whl/%CUDA_INDEX%
+if %ERRORLEVEL% neq 0 ( echo [ERROR] PyTorch installation failed. & pause & exit /b 1 )
 
 echo.
 echo [4/4] Installing application dependencies...
 python -m pip install -r app\requirements.txt
+if %ERRORLEVEL% neq 0 ( echo [ERROR] Dependencies installation failed. & pause & exit /b 1 )
 
 echo.
 echo ===================================================
