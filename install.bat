@@ -1,17 +1,12 @@
 @echo off
 SETLOCAL ENABLEDELAYEDEXPANSION
 
+echo ===================================================
+echo Amin OmniVoice Installer
+echo ===================================================
+
 SET "ROOT_DIR=%~dp0"
 SET "LOG_FILE=%ROOT_DIR%install_log.txt"
-
-:: Clear previous log
-echo --- Amin OmniVoice Install Log [%DATE% %TIME%] --- > "%LOG_FILE%"
-
-echo ===================================================
-echo Amin OmniVoice Deep Diagnostic Installer
-echo ===================================================
-echo.
-echo THIS SCRIPT WILL LOG EVERYTHING TO: install_log.txt
 echo If the window closes, check that file for the error!
 echo.
 

@@ -773,8 +773,9 @@ with gr.Blocks(title="Amin OmniVoice") as demo:
                     with gr.Group():
                         gr.Markdown("<span style='margin-left: 10px;'>**Saved Voices (Voice Preset System)**</span>")
                         with gr.Row():
-                            saved_voice_dropdown = gr.Dropdown(value=USER_SETTINGS.get("saved_voice", None), choices=get_saved_voices(), label="Load Saved Voice", interactive=True)
-                            load_voice_btn = gr.Button("Load Voice", size="sm")
+                            saved_voice_dropdown = gr.Dropdown(value=USER_SETTINGS.get("saved_voice", None), choices=get_saved_voices(), label="Load Saved Voice", interactive=True, scale=4)
+                            refresh_voice_btn = gr.Button("🔄", size="sm", scale=1)
+                            load_voice_btn = gr.Button("Load Voice", size="sm", scale=1)
 
                         with gr.Row():
                             voice_name_input = gr.Textbox(label="Save Voice As", placeholder="Premium Narrator")
@@ -827,6 +828,10 @@ with gr.Blocks(title="Amin OmniVoice") as demo:
                         vc_po = gr.Checkbox(label="Postprocess Output", value=True)
 
             # Wiring Voice Clone Features
+            refresh_voice_btn.click(
+                lambda: gr.update(choices=get_saved_voices()),
+                outputs=[saved_voice_dropdown]
+            )
             load_voice_btn.click(
                 load_voice,
                 inputs=[saved_voice_dropdown],

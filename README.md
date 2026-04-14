@@ -44,6 +44,27 @@ The browser interface will automatically open at `http://127.0.0.1:7860`.
 
 ---
 
+## 🛠️ Troubleshooting & Manual Setup
+
+If `install.bat` fails or you are using a non-standard Python version (like 3.13), you can set up the environment manually:
+
+1. **Create the Environment**:
+   ```bash
+   python -m venv env
+   ```
+2. **Activate it**:
+   - Windows: `env\Scripts\activate`
+3. **Install PyTorch (CUDA 12.4 Stable)**:
+   ```bash
+   python -m pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu124
+   ```
+4. **Install App Requirements**:
+   ```bash
+   python -m pip install -r app/requirements.txt
+   ```
+
+---
+
 ## 🛠️ Credits & Attribution
 
 Amin OmniVoice is a forked and enhanced version of the original OmniVoice project. [k2-fsa](https://github.com/k2-fsa/OmniVoice)
