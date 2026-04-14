@@ -54,10 +54,15 @@ If `install.bat` fails or you are using a non-standard Python version (like 3.13
    ```
 2. **Activate it**:
    - Windows: `env\Scripts\activate`
-3. **Install PyTorch (CUDA 12.4 Stable)**:
-   ```bash
-   python -m pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu124
-   ```
+3. **Install PyTorch**:
+   - **For Standard GPUs (40-series/30-series/etc.)**:
+     ```bash
+     python -m pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu124
+     ```
+   - **For Blackwell GPUs (50-series)**:
+     ```bash
+     python -m pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu128
+     ```
 4. **Install App Requirements**:
    ```bash
    python -m pip install -r app/requirements.txt
