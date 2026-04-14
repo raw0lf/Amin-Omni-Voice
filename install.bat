@@ -65,11 +65,11 @@ if %ERRORLEVEL% == 0 (
 )
 
 echo Installing PyTorch with %CUDA_INDEX%...
-pip install --force-reinstall --no-cache-dir torch torchvision torchaudio --index-url https://download.pytorch.org/whl/%CUDA_INDEX%
+python -m pip install --force-reinstall --no-cache-dir torch torchvision torchaudio --index-url https://download.pytorch.org/whl/%CUDA_INDEX%
 
 echo.
 echo [4/4] Installing application dependencies...
-pip install -r app\requirements.txt
+python -m pip install -r app\requirements.txt
 
 echo.
 echo ===================================================
