@@ -1,105 +1,108 @@
 @echo off
 SETLOCAL ENABLEDELAYEDEXPANSION
 
-:: DEBUG: Force the window to stay open at the very start so we know it launched
-echo DEBUG: Installer has started.
-echo Root Path: %~dp0
-pause
-
-echo ===================================================
-echo Amin OmniVoice Installer (Robust Edition)
-echo ===================================================
-
 SET "ROOT_DIR=%~dp0"
-SET "ENV_DIR=%ROOT_DIR%env"
-SET "REQ_FILE=%ROOT_DIR%app\requirements.txt"
+SET "LOG_FILE=%ROOT_DIR%install_log.txt"
 
-:: Check for Python
-python --version >nul 2>&1
+:: Clear previous log
+echo --- Amin OmniVoice Install Log [%DATE% %TIME%] --- > "%LOG_FILE%"
+
+echo ===================================================
+echo Amin OmniVoice Deep Diagnostic Installer
+echo ===================================================
+echo.
+echo THIS SCRIPT WILL LOG EVERYTHING TO: install_log.txt
+echo If the window closes, check that file for the error!
+echo.
+
+:: 1. Check Python Architecture (Critical for ML)
+echo [1/5] Checking Python architecture...
+python -c "import platform; print(f'Python Architecture: {platform.architecture()[0]}')" >> "%LOG_FILE%" 2>&1
+python -c "import platform; arch = platform.architecture()[0]; exit(0 if arch == '64bit' else 1)"
 if !ERRORLEVEL! neq 0 (
-    echo [ERROR] Python is not installed or not in your PATH. 
-    echo Please install Python 3.10+ and try again.
+    echo [CRITICAL ERROR] You are using 32-bit Python. 
+    echo Amin OmniVoice (and PyTorch) REQUIRE 64-bit Python.
+    echo Please uninstall Python and install the "Windows installer (64-bit)" version.
+    echo.
+    echo Check install_log.txt for details.
     pause
     exit /b 1
 )
+echo Python 64-bit confirmed.
 
+:: 2. Setup Venv
 echo.
-echo [1/4] Setting up virtual environment "env"...
-
-:: Clean up broken env if it exists
-if exist "%ENV_DIR%" (
-    if not exist "%ENV_DIR%\Scripts\python.exe" (
-        echo [WARNING] Existing 'env' folder is broken. Deleting...
-        rd /s /q "%ENV_DIR%"
-    )
-)
-
-:: Create env if missing
-if not exist "%ENV_DIR%" (
-    echo Creating new virtual environment in "%ENV_DIR%"...
-    python -m venv "%ENV_DIR%"
+echo [2/5] Setting up virtual environment...
+if exist "%ROOT_DIR%env" (
+    echo Existing 'env' found.
+) else (
+    echo Creating fresh 'env'...
+    python -m venv "%ROOT_DIR%env" >> "%LOG_FILE%" 2>&1
     if !ERRORLEVEL! neq 0 (
-        echo [ERROR] Failed to create virtual environment.
+        echo [ERROR] Venv creation failed. Check install_log.txt
         pause
         exit /b 1
     )
-) else (
-    echo Using existing environment at "%ENV_DIR%"
 )
 
 echo.
-echo [2/4] Activating environment...
-call "%ENV_DIR%\Scripts\activate.bat"
+echo [3/5] Activating environment...
+call "%ROOT_DIR%env\Scripts\activate.bat" >> "%LOG_FILE%" 2>&1
 if !ERRORLEVEL! neq 0 (
-    echo [ERROR] Failed to activate environment.
+    echo [ERROR] Activation failed. Check install_log.txt
     pause
     exit /b 1
 )
 
 echo.
-echo [3/4] Detecting GPU and installing PyTorch...
-python -m pip install --upgrade pip wheel
-if !ERRORLEVEL! neq 0 ( echo [ERROR] Pip upgrade failed. & pause & exit /b 1 )
+echo [4/5] Installing PyTorch with auto-detection...
+python -m pip install --upgrade pip wheel >> "%LOG_FILE%" 2>&1
 
-:: Auto-detection logic (Quoted paths)
+:: GPU Detection
 set "CUDA_INDEX=cu124"
-set "GPU_FILE=%ROOT_DIR%gpu_name.txt"
-nvidia-smi --query-gpu=name --format=csv,noheader > "%GPU_FILE%" 2>nul
+nvidia-smi --query-gpu=name --format=csv,noheader > "%ROOT_DIR%gpu.tmp" 2>nul
 if !ERRORLEVEL! == 0 (
-    set /p GPU_NAME=<"%GPU_FILE%"
+    set /p GPU_NAME=<"%ROOT_DIR%gpu.tmp"
     echo Detected GPU: !GPU_NAME!
     echo !GPU_NAME! | findstr /i "RTX.50" >nul
     if !ERRORLEVEL! == 0 (
-        echo [INFO] Blackwell (50-series) detected. Using CUDA 12.8...
         set "CUDA_INDEX=cu128"
+        echo Target: CUDA 12.8 (Blackwell)
     ) else (
-        echo [INFO] Standard NVIDIA GPU detected. Using stable CUDA 12.4...
+        echo Target: CUDA 12.4 (Stable)
     )
-    del "%GPU_FILE%"
+    del "%ROOT_DIR%gpu.tmp"
 ) else (
-    echo [WARNING] nvidia-smi not found. Defaulting to stable CUDA 12.4...
+    echo No NVIDIA GPU detected via SMI. Using CPU/Stable fallback.
 )
 
-echo Installing PyTorch with %CUDA_INDEX%...
-python -m pip install --force-reinstall --no-cache-dir torch torchvision torchaudio --index-url https://download.pytorch.org/whl/%CUDA_INDEX%
-if !ERRORLEVEL! neq 0 ( echo [ERROR] PyTorch installation failed. & pause & exit /b 1 )
-
 echo.
-echo [4/4] Installing application dependencies...
-python -m pip install -r "%REQ_FILE%"
-if !ERRORLEVEL! neq 0 ( echo [ERROR] Dependencies installation failed. & pause & exit /b 1 )
-
-echo.
-echo ===================================================
-echo Verifying CUDA acceleration...
-python -c "import torch; print('CUDA Detection Result: ' + ('SUCCESS' if torch.cuda.is_available() else 'FAILED')); exit(0 if torch.cuda.is_available() else 1)"
+echo Starting massive 2GB download... this might take several minutes.
+echo Be patient! Do not close the window.
+python -m pip install --force-reinstall --no-cache-dir torch torchvision torchaudio --index-url https://download.pytorch.org/whl/%CUDA_INDEX% >> "%LOG_FILE%" 2>&1
 if !ERRORLEVEL! neq 0 (
-    echo [CRITICAL ERROR] The GPU was not detected in this environment. 
-    echo Please ensure you have NVIDIA drivers installed and try running this script again.
+    echo [ERROR] PyTorch installation failed. 
+    echo This is likely a network timeout or disk space issue.
+    echo Check the END of install_log.txt for the specific error.
+    pause
+    exit /b 1
 )
+
+echo.
+echo [5/5] Installing remaining studio dependencies...
+python -m pip install -r "%ROOT_DIR%app\requirements.txt" >> "%LOG_FILE%" 2>&1
+if !ERRORLEVEL! neq 0 (
+    echo [ERROR] Requirements failed. Check install_log.txt
+    pause
+    exit /b 1
+)
+
 echo.
 echo ===================================================
-echo Installation Complete! 
-echo You can now launch the application using run.bat
+echo Verifying Installation...
+python -c "import torch; print(f'CUDA available: {torch.cuda.is_available()}'); print(f'GPU: {torch.cuda.get_device_name(0) if torch.cuda.is_available() else \"None\"}')" >> "%LOG_FILE%" 2>&1
+echo DONE! 
+echo.
+echo Check the end of install_log.txt to confirm everything looks good.
 echo ===================================================
 pause
